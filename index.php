@@ -17,7 +17,7 @@ define('Exo\APP_MODULES_PATH', Exo\APP_PATH . '/modules');
 define('Exo\APP_MODULES_URL', Exo\APP_URL . '/modules');
 define('Exo\APP_THEMES_PATH', Exo\APP_PATH . '/themes');
 define('Exo\APP_THEMES_URL', Exo\APP_URL . '/themes');
-define('Exo\CACHE_PATH', Exo\APP_PATH . '/cache');
+define('Exo\CACHE_PATH', Exo\EXO_PATH . '/cache');
 define('Exo\ASSETS_PATH', Exo\APP_PATH . '/assets');
 define('Exo\ASSETS_URL', Exo\APP_URL . '/assets');
 
