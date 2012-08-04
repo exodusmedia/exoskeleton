@@ -52,6 +52,8 @@ class Request extends Entity
 	protected $protocol;
 	protected $domain;
 	protected $start_time;
+	protected $rewrite;
+	protected $url;
 
 	/**
 	 * Instantiate Request
@@ -59,12 +61,24 @@ class Request extends Entity
 	public function __construct()
 	{
 		$this->start_time = microtime(TRUE);
-		$this->string = @$_REQUEST[self::REQUEST_KEY];
 
-		$this->host = @$_SERVER['HTTP_HOST'];
 		$this->protocol = @$_SERVER['HTTPS'] ? 'https' : 'http';
-		$this->method = strtolower(@$_SERVER['REQUEST_METHOD']);
+		$this->host = @$_SERVER['HTTP_HOST'];
 		$this->domain = $this->protocol . '://' . $this->host;
+		$this->url = $this->domain . @$_SERVER['REQUEST_URI'];
+
+		// is mod_rewrite being used?
+		$this->rewrite = array_key_exists(self::REQUEST_KEY, $_REQUEST);
+
+		if ($this->rewrite)
+		{
+			$this->string = @$_REQUEST[self::REQUEST_KEY];
+		} else {
+			$parts = explode(self::REQUEST_SEPARATOR, str_replace($this->domain, '', $this->url));
+			$this->string = implode(self::REQUEST_SEPARATOR, array_slice($parts, 2));
+		}
+
+		$this->method = strtolower(@$_SERVER['REQUEST_METHOD']);
 
 		$this->user_agent = @$_SERVER['HTTP_USER_AGENT'];
 

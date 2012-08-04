@@ -121,6 +121,11 @@ class HTML extends Renderer
 		$segments = array_merge($segments, $args);
 
 		// now make it a string
+		$rewrite = $this->application->request->rewrite;
+		if (!$rewrite)
+		{
+			return \Exo\BASE_URL . '/index.php/' . implode(Route::REQUEST_SEPARATOR, $segments);
+		}
 		return \Exo\BASE_URL . '/' . implode(Route::REQUEST_SEPARATOR, $segments);
 	}
 
