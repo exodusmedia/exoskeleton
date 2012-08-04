@@ -87,6 +87,20 @@ class Cache extends Entity
 	}
 
 	/**
+	 * Is the request cacheable?
+	 * @param Exo\Request $request
+	 * @return bool
+	 */
+	public function is_cacheable($request)
+	{
+		if ($request->method == 'get' && @$request->route->cache > 0)
+		{
+			return TRUE;
+		}
+		return FALSE;
+	}
+
+	/**
 	 * Save a copy of the response to the cache
 	 * @param Exo\Request $request
 	 * @param Exo\Response $response

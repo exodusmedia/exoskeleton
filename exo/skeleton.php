@@ -270,9 +270,9 @@ class Exo
 		}
 
 		// check for cached version if possible
-		if (isset($route->cache))
+		$cache = new Cache(\Exo\CACHE_PATH);
+		if ($cache->is_cacheable($request))
 		{
-			$cache = new Cache(\Exo\CACHE_PATH);
 			$response = $cache->get($request, $route->cache);
 			if ($response)
 			{
@@ -287,7 +287,7 @@ class Exo
 		}
 
 		// save a cached version if caching is enabled
-		if (isset($route->cache))
+		if ($cache->is_cacheable($request))
 		{
 			$cache->save($request, $response);
 		}
