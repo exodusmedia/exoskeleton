@@ -9,6 +9,8 @@ use Exo\Application as App;
 use Exo\Database\Connection;
 class Application extends App
 {
+	static $restful = TRUE;
+
 	public function get_index()
 	{
 		return $this->render('example/index');

@@ -247,7 +247,7 @@ class Exo
 
 		// if restful, use a protocol_segment0 method
 
-		if ($route->restful)
+		if (@$class::$restful || @$route->restful)
 		{
 			$method = implode('_', array(
 				strtolower($_SERVER['REQUEST_METHOD']),

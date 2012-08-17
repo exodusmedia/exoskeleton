@@ -12,7 +12,6 @@ use Exo\Route;
 // on the type of request being made
 Route::add('default', array(
 	'class' => 'Example\Application',
-	'restful' => TRUE,
 	'cache' => 5 
 ));
 
