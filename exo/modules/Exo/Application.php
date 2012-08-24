@@ -46,7 +46,8 @@ class Application extends Entity
 	{
 		$this->request = $request;
 		$this->route = $this->request->route;
-		$this->view = new View($this);
+		if (!$this->view) { $this->view = new View($this); }
+
 		$this->errors = new Error();
 	}
 
