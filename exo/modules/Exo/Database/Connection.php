@@ -8,7 +8,7 @@
 namespace Exo\Database;
 
 use stdClass;
-use PDO;
+use Exo\Database\RPDO as PDO;
 use Exo\Database;
 use Exo\Environment;
 use Exo\Exception;
@@ -32,8 +32,19 @@ class Connection extends PDO
 		$database = Database::get($id);
 		$dsn = $database->type . ':dbname=' . $database->name . ';host=' . $database->host;
 		parent::__construct($dsn, $database->user, $database->password);
-		parent::setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
-		parent::setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+	}
+
+	/**
+	 * Perform a query
+	 * @param string $sql
+	 * @param array $values (optional)
+	 * @return bool
+	 */
+	public function query($sql, $values = array())
+	{
+		$query = $this->prepare($sql);
+		$result = $query->execute($values);
+		return $result;
 	}
 
 	/**
@@ -56,9 +67,25 @@ class Connection extends PDO
 		{
 			if (is_array($value))
 			{
-				$recurse = $this->get_where_filters($value);
-				$wheres[] = $recurse->wheres;
-				$return->values = array_merge($return->values, $recurse->values);
+				switch (@$value[1])
+				{
+				case 'starts_with':
+					$wheres[] = sprintf('%1$s LIKE :%1$s', $value[0]);
+					$values[':' . $value[0]] = $value[2] . '%';
+					break;
+				case 'contains':
+					$wheres[] = sprintf('%1$s LIKE :%1$s', $value[0]);
+					$values[':' . $value[0]] = '%' . $value[2] . '%';
+					break;
+				case 'ends_with':
+					$wheres[] = sprintf('%1$s LIKE :%1$s', $value[0]);
+					$values[':' . $value[0]] = '%' . $value[2];
+					break;
+				default:
+					$recurse = $this->get_where_filters($value);
+					$wheres[] = $recurse->wheres;
+					$return->values = array_merge($return->values, $recurse->values);
+				}
 			} else {
 				$wheres[] = sprintf('%1$s = :%1$s', $field);
 				$values[':' . $field] = $value;
@@ -71,10 +98,12 @@ class Connection extends PDO
 		return $return;
 	}
 
-	public function update($table, $options, $data)
+	public function insert($table, $data, $options = array())
 	{
+		// TODO: allow options array to specify fields
+
 		$parts = array();
-		$parts[] = sprintf('UPDATE %s', $table);
+		$parts[] = sprintf('INSERT INTO %s', $table);
 
 		if (count($data) == 0)
 		{
@@ -89,8 +118,55 @@ class Connection extends PDO
 		}
 		$parts[] = 'SET ' . implode(', ', $updates);
 
+		$sql = implode(' ', $parts);
+
+		$query = $this->prepare($sql);
+		$result = $query->execute($values);
+
+		if ($result)
+		{
+			return $this->lastInsertId();
+		}
+		return FALSE;
+	}
+
+	public function get_non_array_options($options)
+	{
+		$field = is_numeric($options) ? 'id' : 'slug';
+		$options = array(
+			'where' => array($field => $options),
+			'amount' => 1
+		); 
+		return $options;
+	}
+
+	public function update($table, $options, $data)
+	{
+		// TODO: make 'amount' option work
+		$parts = array();
+		$parts[] = sprintf('UPDATE %s', $table);
+
+		if (count($data) == 0)
+		{
+			return TRUE;
+		}
+
+		if (!is_array($options)) 
+		{ 
+			$options = $this->get_non_array_options($options);
+		}
+
+		$updates = array();
+		foreach ($data as $key => $value)
+		{
+			$updates[] = sprintf('%1$s = :%1$s', $key);
+			$values[':' . $key] = $value;
+		}
+		$parts[] = 'SET ' . implode(', ', $updates);
+
 		if ($options['where'] !== NULL)
 		{
+
 			$where = $this->get_where_filters($options['where']);
 			if (!empty($where->string))
 			{
@@ -129,6 +205,46 @@ class Connection extends PDO
 	}
 
 	/**
+	 * Delete
+	 * @param string $table
+	 * @param array $options (optional) array(
+	 * )
+	 */
+	public function delete($table, $options = array())
+	{
+		if (!is_array($options)) 
+		{ 
+			$options = $this->get_non_array_options($options);
+		}
+
+		$options = array_merge(array(
+			'where' => null,
+			'amount' => null,
+			'fields' => null
+		), $options);
+
+		$values = array();
+
+		$parts = array();
+		$parts[] = sprintf('DELETE FROM %s', $table);
+
+		if ($options['where'] !== NULL)
+		{
+			$where = $this->get_where_filters($options['where']);
+			if (!empty($where->string))
+			{
+				$parts[] = 'WHERE ' . $where->string;
+				$values = array_merge($values, $where->values);
+			}
+		}
+
+		$sql = implode(' ', $parts);
+
+		$query = $this->prepare($sql);
+		return $query->execute($values);
+	}
+
+	/**
 	 * Perform a select
 	 * @param string $table
 	 * @param array $options (optional) array(
@@ -138,11 +254,7 @@ class Connection extends PDO
 	{
 		if (!is_array($options)) 
 		{ 
-			$field = is_numeric($options) ? 'id' : 'slug';
-			$options = array(
-				'where' => array($field => $options),
-				'amount' => 1
-			); 
+			$options = $this->get_non_array_options($options);
 		}
 
 		$options = array_merge(array(
