@@ -12,9 +12,6 @@ Features
 - Environment definition and loading
 - Database interface classes extending PDO
 - Data output formatting (html, xml, json, etc.)
-
-Coming Soon
------------
 - Caching of requests on a per-application basis
 
 Coming Maybe
@@ -24,12 +21,6 @@ Coming Maybe
 Dreams
 ------
 - Event handling and proxying
-
-Affiliated Projects
--------------------
-- Existence PHP ORM - http://exodus.io/orm
-- ExoTest Unit Testing Framework - http://exodus.io/test
-- ExoUI Form/UI Toolkit - http://exodus.io/ui
 
 HOW TO USE THIS DAMN THING
 --------------------------
